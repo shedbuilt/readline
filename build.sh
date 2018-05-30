@@ -1,11 +1,14 @@
 #!/bin/bash
+declare -A SHED_PKG_LOCAL_OPTIONS=${SHED_PKG_OPTIONS_ASSOC}
+# Configure
+SHED_PKG_LOCAL_DOCDIR=/usr/share/doc/${SHED_PKG_NAME}-${SHED_PKG_VERSION}
 sed -i '/MV.*old/d' Makefile.in &&
 sed -i '/{OLDSUFF}/c:' support/shlib-install &&
 ./configure --prefix=/usr    \
             --disable-static \
-            --docdir=/usr/share/doc/readline-${SHED_PKG_VERSION} || exit 1
+            --docdir=${SHED_PKG_LOCAL_DOCDIR} || exit 1
 
-if [ "$SHED_BUILD_MODE" == 'bootstrap' ]; then
+if [ -n "${SHED_PKG_LOCAL_OPTIONS[bootstrap]}" ]; then
     READLINE_BUILD_LIBS="-L/tools/lib -lncursesw"
     READLINE_INSTALL_LIBS="-L/tools/lib -lncurses"
 else
@@ -21,12 +24,14 @@ mv -v "${SHED_FAKE_ROOT}"/usr/lib/lib{readline,history}.so.* "${SHED_FAKE_ROOT}/
 chmod 755 "${SHED_FAKE_ROOT}"/lib/lib{readline,history}.so.* &&
 # Fix symlinks
 ln -sfv ../../lib/$(readlink "${SHED_FAKE_ROOT}/usr/lib/libreadline.so") "${SHED_FAKE_ROOT}/usr/lib/libreadline.so" &&
-ln -sfv ../../lib/$(readlink "${SHED_FAKE_ROOT}/usr/lib/libhistory.so") "${SHED_FAKE_ROOT}/usr/lib/libhistory.so" &&
-# Install docs
-install -v -Dm644 doc/*.{ps,pdf,html,dvi} "${SHED_FAKE_ROOT}/usr/share/doc/readline-${SHED_PKG_VERSION}" &&
-# Install default conig
-install -v -Dm644 "${SHED_PKG_CONTRIB_DIR}/inputrc" "${SHED_FAKE_ROOT}/usr/share/defaults/etc/inputrc" || exit 1
-if [ "$SHED_BUILD_MODE" == 'bootstrap' ]; then
-    # In bootstrap, install the default config file directly as postinstall will be skipped
-    install -v -Dm644 "${SHED_PKG_CONTRIB_DIR}/inputrc" "${SHED_FAKE_ROOT}/etc/inputrc" || exit 1
+ln -sfv ../../lib/$(readlink "${SHED_FAKE_ROOT}/usr/lib/libhistory.so") "${SHED_FAKE_ROOT}/usr/lib/libhistory.so" || exit 1
+
+# Install Documentation
+if [ -n "${SHED_PKG_LOCAL_OPTIONS[docs]}" ]; then
+    install -v -Dm644 doc/*.{ps,pdf,html,dvi} "${SHED_FAKE_ROOT}${SHED_PKG_LOCAL_DOCDIR}" || exit 1
+else
+    rm -rf "${SHED_FAKE_ROOT}/usr/share/doc"
 fi
+
+# Install Config File
+install -v -Dm644 "${SHED_PKG_CONTRIB_DIR}/inputrc" "${SHED_FAKE_ROOT}/usr/share/defaults/etc/inputrc" || exit 1
