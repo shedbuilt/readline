@@ -34,4 +34,4 @@ else
 fi
 
 # Install Config File
-install -v -Dm644 "${SHED_PKG_CONTRIB_DIR}/inputrc" "${SHED_FAKE_ROOT}/usr/share/defaults/etc/inputrc" || exit 1
+install -v -Dm644 "${SHED_PKG_CONTRIB_DIR}/inputrc" "${SHED_FAKE_ROOT}${SHED_PKG_DEFAULTS_INSTALL_DIR}/etc/inputrc" || exit 1
